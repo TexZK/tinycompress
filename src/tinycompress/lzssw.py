@@ -38,7 +38,7 @@
 #         CompuServe  74050,1022
 # **************************************************************/
 
-"""Lempel-Ziv-Storer-Szymanski compression algorithm.
+"""Lempel-Ziv-Storer-Szymanski via Words compression algorithm.
 
 This module implements the LZSSW compression algorithm, a variant of LZSS.
 The algorithm maintains a ring buffer and uses bit flags to indicate compressed
@@ -60,13 +60,13 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
-from base import BaseCompressor
-from base import BaseDecompressor
-from base import ByteIterable
-from base import CodecFile
-from base import codec_compress
-from base import codec_decompress
-from base import codec_open
+from .base import BaseCompressor
+from .base import BaseDecompressor
+from .base import ByteIterable
+from .base import CodecFile
+from .base import codec_compress
+from .base import codec_decompress
+from .base import codec_open
 
 _CodecGenerator = Generator[None, Union[int, Ellipsis, None], None]
 

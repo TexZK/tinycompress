@@ -30,14 +30,14 @@ import sys
 
 import pytest
 
-from lzssw import LZSSWCompressor
-from lzssw import LZSSWDecompressor
-from lzssw import LZSSWException
-from lzssw import LZSSWFile
-from lzssw import compress
-from lzssw import decompress
-from lzssw import main
-from lzssw import open as lzssw_open
+from tinycompress.lzssw import LZSSWCompressor
+from tinycompress.lzssw import LZSSWDecompressor
+from tinycompress.lzssw import LZSSWException
+from tinycompress.lzssw import LZSSWFile
+from tinycompress.lzssw import compress
+from tinycompress.lzssw import decompress
+from tinycompress.lzssw import main
+from tinycompress.lzssw import open as lzssw_open
 
 lorem = b"""\
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod

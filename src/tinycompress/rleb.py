@@ -23,7 +23,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Run-Length Encoding using BitFlags (RLEB) compression algorithm.
+"""Run-Length Encoding for Bytes (RLEB) compression algorithm.
 
 This module implements the RLEB compression algorithm, which combines run-length
 encoding with bit flags to efficiently compress data that contains repeated bytes.
@@ -37,13 +37,13 @@ from typing import IO
 from typing import Optional
 from typing import Union
 
-from base import BaseCompressor
-from base import BaseDecompressor
-from base import ByteIterable
-from base import CodecFile
-from base import codec_compress
-from base import codec_decompress
-from base import codec_open
+from .base import BaseCompressor
+from .base import BaseDecompressor
+from .base import ByteIterable
+from .base import CodecFile
+from .base import codec_compress
+from .base import codec_decompress
+from .base import codec_open
 
 
 class RLEBException(Exception):
@@ -54,7 +54,7 @@ class RLEBException(Exception):
 class RLEBCompressor(BaseCompressor):
     """RLEB compression implementation.
 
-    This compressor implements Run-Length Encoding with BitFlags (RLEB), which
+    This compressor implements Run-Length Encoding for Bytes (RLEB), which
     efficiently compresses repeated byte sequences while maintaining good performance
     for non-repeated data.
 
@@ -252,7 +252,7 @@ class RLEBCompressor(BaseCompressor):
 class RLEBDecompressor(BaseDecompressor):
     """RLEB decompression implementation.
 
-    This decompressor handles data compressed using Run-Length Encoding with BitFlags
+    This decompressor handles data compressed using Run-Length Encoding for Bytes
     (RLEB). It processes the compressed data in chunks, expanding runs of repeated
     bytes and copying literal byte sequences.
     """

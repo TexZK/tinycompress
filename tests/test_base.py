@@ -27,12 +27,12 @@ import io
 
 import pytest
 
-from base import BUFFER_SIZE
-from base import CodecFile
-from base import DecompressorStream
-from base import codec_open
-from rleb import RLEBCompressor
-from rleb import RLEBDecompressor
+from tinycompress.base import BUFFER_SIZE
+from tinycompress.base import CodecFile
+from tinycompress.base import DecompressorStream
+from tinycompress.base import codec_open
+from tinycompress.rleb import RLEBCompressor
+from tinycompress.rleb import RLEBDecompressor
 
 
 class Test_DecompressorStream:

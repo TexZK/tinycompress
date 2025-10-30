@@ -30,14 +30,14 @@ import sys
 
 import pytest
 
-from rleb import RLEBCompressor
-from rleb import RLEBDecompressor
-from rleb import RLEBException
-from rleb import RLEBFile
-from rleb import compress
-from rleb import decompress
-from rleb import main
-from rleb import open as rleb_open
+from tinycompress.rleb import RLEBCompressor
+from tinycompress.rleb import RLEBDecompressor
+from tinycompress.rleb import RLEBException
+from tinycompress.rleb import RLEBFile
+from tinycompress.rleb import compress
+from tinycompress.rleb import decompress
+from tinycompress.rleb import main
+from tinycompress.rleb import open as rleb_open
 
 lorem = b"""\
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
