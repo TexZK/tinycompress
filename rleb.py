@@ -23,6 +23,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Run-Length Encoding using BitFlags (RLEB) compression algorithm.
+
+This module implements the RLEB compression algorithm, which combines run-length
+encoding with bit flags to efficiently compress data that contains repeated bytes.
+"""
+
 import argparse
 import io
 import os
@@ -41,13 +47,28 @@ from base import codec_open
 
 
 class RLEBException(Exception):
+    """Exception raised for RLEB compression/decompression errors."""
     pass
 
 
 class RLEBCompressor(BaseCompressor):
+    """RLEB compression implementation.
+
+    This compressor implements Run-Length Encoding with BitFlags (RLEB), which
+    efficiently compresses repeated byte sequences while maintaining good performance
+    for non-repeated data.
+
+    The algorithm uses a ring buffer to track recent bytes and detect repetitions.
+    When 3 or more identical bytes are found, they are encoded as a run. Otherwise,
+    bytes are stored literally with a count.
+    """
 
     def __init__(self) -> None:
+        """Initializes a new RLEB compressor instance.
 
+        The compressor starts with an empty ring buffer and no previous byte tracked.
+        The end-of-file flag is initially False.
+        """
         self._eof = False
         self._ring = bytearray(0x100)
         self._head = 0
@@ -57,7 +78,21 @@ class RLEBCompressor(BaseCompressor):
         self._prev = -1  # invalid
 
     def compress(self, data: ByteIterable) -> bytearray:
+        """Compresses the given data using RLEB encoding.
 
+        The compression maintains a ring buffer and tracks repeated bytes. When 3 or
+        more identical bytes are found, they are encoded as a run using a flag byte
+        and count. Non-repeated sequences are stored with their literal values.
+
+        Args:
+            data: Input data to compress.
+
+        Returns:
+            Compressed data as a bytearray.
+
+        Raises:
+            RLEBException: If the compressor has already been flushed.
+        """
         if self._eof:
             raise RLEBException('already flushed')
 
@@ -152,7 +187,15 @@ class RLEBCompressor(BaseCompressor):
         return out
 
     def flush(self) -> bytearray:
+        """Flushes any remaining data from the compressor.
 
+        This outputs any pending data in the ring buffer and marks the compressor
+        as finished. After calling flush(), the compressor cannot be used again
+        unless reset.
+
+        Returns:
+            Any remaining compressed data as a bytearray.
+        """
         out = bytearray()
 
         if not self._eof:
@@ -184,7 +227,11 @@ class RLEBCompressor(BaseCompressor):
         return out
 
     def reset(self) -> None:
+        """Resets the compressor to its initial state.
 
+        This clears all internal buffers and state, allowing the compressor
+        to be reused for a new compression task.
+        """
         self._eof = False
         self._head = 0
         self._tail = 0
@@ -194,14 +241,28 @@ class RLEBCompressor(BaseCompressor):
 
     @property
     def eof(self) -> bool:
+        """Whether the compressor has been flushed.
 
+        Returns:
+            True if flush() has been called, False otherwise.
+        """
         return self._eof
 
 
 class RLEBDecompressor(BaseDecompressor):
+    """RLEB decompression implementation.
+
+    This decompressor handles data compressed using Run-Length Encoding with BitFlags
+    (RLEB). It processes the compressed data in chunks, expanding runs of repeated
+    bytes and copying literal byte sequences.
+    """
 
     def __init__(self) -> None:
+        """Initializes a new RLEB decompressor instance.
 
+        Sets up internal state for processing compressed data including tracking
+        whether in RLE mode and buffering input data.
+        """
         self._eof = False
         self._rle = False
         self._more = 0
@@ -214,6 +275,21 @@ class RLEBDecompressor(BaseDecompressor):
             max_length: int = -1,
             /,
     ) -> bytearray:
+        """Decompresses RLEB-encoded data.
+
+        Processes compressed data, expanding runs of repeated bytes and copying
+        literal sequences. Can optionally limit the amount of output produced.
+
+        Args:
+            data: Compressed input data to decompress.
+            max_length: Maximum number of output bytes to produce. Default -1 means no limit.
+
+        Returns:
+            Decompressed data as bytearray.
+
+        Raises:
+            RLEBException: If the decompressor has already been flushed.
+        """
 
         if self._eof:
             raise RLEBException('already flushed')
@@ -297,7 +373,14 @@ class RLEBDecompressor(BaseDecompressor):
         return out
 
     def flush(self) -> bytearray:
+        """Flushes any remaining data and marks decompression as complete.
 
+        Should be called when all input data has been provided to ensure
+        any buffered output is returned.
+
+        Returns:
+            Any remaining decompressed data, or empty bytearray if already flushed.
+        """
         if self._eof:
             return bytearray()
 
@@ -306,7 +389,11 @@ class RLEBDecompressor(BaseDecompressor):
         return chunk
 
     def reset(self) -> None:
+        """Resets the decompressor to its initial state.
 
+        Clears all internal buffers and state variables, allowing the decompressor
+        to be reused for a new decompression task.
+        """
         self._eof = False
         self._rle = False
         self._more = 0
@@ -315,17 +402,37 @@ class RLEBDecompressor(BaseDecompressor):
 
     @property
     def eof(self) -> bool:
+        """Whether the decompressor has reached the end of the compressed stream.
 
+        Returns:
+            True if all input has been processed and flushed, False otherwise.
+        """
         return self._eof
 
     @property
     def unused_data(self) -> bytearray:
+        """Gets any unprocessed data remaining after decompression.
 
+        This property returns any data that was found after the end of the
+        compressed stream.
+
+        Returns:
+            Remaining unprocessed data if eof is True, empty bytearray otherwise.
+        """
         return self._ahead if self.eof else bytearray()
 
     @property
     def needs_input(self) -> bool:
+        """Checks if more input data is needed to continue decompression.
 
+        This property indicates whether the decompressor needs more data to
+        make progress. When True, no output can be produced until more data
+        is provided.
+
+        Returns:
+            True if more input is needed, False if decompressor can continue
+            with current data.
+        """
         if self._eof:
             return False
         elif self._rle:
@@ -335,26 +442,56 @@ class RLEBDecompressor(BaseDecompressor):
 
 
 class RLEBFile(CodecFile):
+    """File-like object for reading/writing RLEB compressed files.
+
+    This class provides a high-level interface for working with RLEB compressed files,
+    supporting both reading and writing operations with automatic compression/decompression.
+    """
 
     def __init__(
             self,
             filename: Union[str, bytes, os.PathLike, IO],
             mode: str = 'r',
     ) -> None:
+        """Creates a new RLEB file object.
 
+        Args:
+            filename: Path to the file or an existing file object.
+            mode: File open mode ('r'/'rb' for reading, 'w'/'wb'/'x'/'xb'/'a'/'ab' for writing).
+        """
         comp = RLEBCompressor()
         decomp = RLEBDecompressor()
         super().__init__(filename, mode=mode, comp=comp, decomp=decomp)
 
 
 def compress(data: ByteIterable) -> bytes:
+    """Compresses data using the RLEB algorithm.
 
+    This is a convenience function that creates a compressor, compresses
+    the data, and returns the result.
+
+    Args:
+        data: Data to compress.
+
+    Returns:
+        Compressed data as bytes.
+    """
     comp = RLEBCompressor()
     return codec_compress(data, comp)
 
 
 def decompress(data: ByteIterable) -> bytes:
+    """Decompresses RLEB-compressed data.
 
+    This is a convenience function that creates a decompressor, decompresses
+    the data, and returns the result.
+
+    Args:
+        data: RLEB-compressed data to decompress.
+
+    Returns:
+        Decompressed data as bytes.
+    """
     decomp = RLEBDecompressor()
     return codec_decompress(data, decomp)
 
@@ -366,7 +503,21 @@ def open(
         errors: Optional[str] = None,
         newline: Optional[str] = None,
 ) -> Union[CodecFile, io.TextIOWrapper]:
+    """Opens an RLEB compressed file.
 
+    This provides a high-level interface similar to the built-in open() function
+    but for RLEB compressed files. It supports both binary and text modes.
+
+    Args:
+        filename: Path to file or file object.
+        mode: File open mode ('r'/'rb' for reading, 'w'/'wb'/'x'/'xb'/'a'/'ab' for writing).
+        encoding: Text encoding for text mode.
+        errors: How to handle encoding/decoding errors in text mode.
+        newline: How to handle newlines in text mode.
+
+    Returns:
+        A CodecFile for binary mode or TextIOWrapper for text mode.
+    """
     comp = RLEBCompressor()
     decomp = RLEBDecompressor()
     return codec_open(
@@ -381,6 +532,12 @@ def open(
 
 
 def main() -> None:
+    """Command-line interface for RLEB compression/decompression.
+
+    Provides a command-line tool for compressing or decompressing files
+    using the RLEB algorithm. Supports reading from standard input and
+    writing to standard output.
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-d', '--decompress', action='store_true',
