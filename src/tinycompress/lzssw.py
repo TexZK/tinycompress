@@ -68,7 +68,7 @@ from .base import codec_compress
 from .base import codec_decompress
 from .base import codec_open
 
-_CodecGenerator = Generator[None, Union[int, Ellipsis, None], None]
+_CodecGenerator = Generator[None, Union[int, type(Ellipsis), None], None]
 
 RING_SIZE_MIN = 0x0200
 """Minimum ring buffer size."""
@@ -887,7 +887,7 @@ def main() -> None:
                         help='Maximum LZSS match size.')
 
     parser.add_argument('-f', '--fill-value', type=int, default=COMMON_BYTE_DEF,
-                        help=f'Fill byte value; default: ASCII space (0x20).')
+                        help='Fill byte value; default: ASCII space (0x20).')
 
     parser.add_argument('infile', nargs='?', type=argparse.FileType('rb'), default=sys.stdin,
                         help='Input binary file; default: STDIN.')

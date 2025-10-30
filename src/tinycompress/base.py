@@ -35,10 +35,10 @@ import io
 import os
 import sys
 from builtins import open as _builtins_open
+from typing import IO
 from typing import Any
 from typing import BinaryIO
 from typing import Iterable
-from typing import IO
 from typing import List
 from typing import Optional
 from typing import Union
@@ -123,7 +123,8 @@ class BaseDecompressor(abc.ABC):
     """
 
     @abc.abstractmethod
-    def decompress(self,
+    def decompress(
+            self,
             data: ByteIterable,
             max_length: int = -1,
             /,
