@@ -39,13 +39,10 @@ from typing import IO
 from typing import Any
 from typing import BinaryIO
 from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Union
 from typing import cast as _cast
 
-ByteString = Union[bytes, bytearray, memoryview]
-ByteIterable = Union[ByteString, Iterable[int]]
+ByteString = bytes | bytearray | memoryview
+ByteIterable = ByteString | Iterable[int]
 
 BUFFER_SIZE = io.DEFAULT_BUFFER_SIZE
 """Compressed data read chunk size."""
@@ -63,7 +60,7 @@ class BaseCompressor(abc.ABC):
     def compress(
             self,
             data: ByteIterable,
-    ) -> Union[bytes, bytearray]:
+    ) -> bytes | bytearray:
         """Compresses the given data.
 
         Args:
@@ -79,7 +76,7 @@ class BaseCompressor(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def flush(self) -> Union[bytes, bytearray]:
+    def flush(self) -> bytes | bytearray:
         """Flushes any remaining data from the compressor.
 
         This method finalizes the compression process by returning any remaining
@@ -128,7 +125,7 @@ class BaseDecompressor(abc.ABC):
             data: ByteIterable,
             max_length: int = -1,
             /,
-    ) -> Union[bytes, bytearray]:
+    ) -> bytes | bytearray:
         """Decompresses the given data.
 
         Args:
@@ -145,7 +142,7 @@ class BaseDecompressor(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def flush(self) -> Union[bytes, bytearray]:
+    def flush(self) -> bytes | bytearray:
         """Flushes any pending decompressed data.
 
         Returns:
@@ -176,7 +173,7 @@ class BaseDecompressor(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def unused_data(self) -> Union[bytes, bytearray]:
+    def unused_data(self) -> bytes | bytearray:
         """Data found after the end of the compressed stream.
 
         Returns:
@@ -219,7 +216,7 @@ class DecompressorStream(io.RawIOBase):
         self._decomp = decomp
         self._tell = 0
 
-    def read(self, size: Optional[int] = -1, /) -> bytes:
+    def read(self, size: int | None = -1, /) -> bytes:
         """Read and decompress up to size bytes from the stream.
 
         Args:
@@ -365,10 +362,10 @@ class CodecFile(io.BufferedIOBase):
 
     def __init__(
             self,
-            filename: Union[str, bytes, os.PathLike, IO],
+            filename: str | bytes | os.PathLike | IO,
             mode: str = 'r',
-            comp: Optional[BaseCompressor] = None,
-            decomp: Optional[BaseDecompressor] = None,
+            comp: BaseCompressor | None = None,
+            decomp: BaseDecompressor | None = None,
     ) -> None:
 
         if mode in ('', 'r', 'rb'):
@@ -486,7 +483,7 @@ class CodecFile(io.BufferedIOBase):
         """
         return self._stream.fileno()
 
-    def read(self, size: Optional[int] = -1, /) -> bytes:
+    def read(self, size: int | None = -1, /) -> bytes:
         """Read and decompress up to size bytes from the file.
 
         Args:
@@ -540,7 +537,7 @@ class CodecFile(io.BufferedIOBase):
         """
         return self._reader.read()
 
-    def readline(self, size: Optional[int] = -1, /) -> bytes:
+    def readline(self, size: int | None = -1, /) -> bytes:
         """Read and decompress a single line from the file.
 
         Args:
@@ -556,7 +553,7 @@ class CodecFile(io.BufferedIOBase):
         self._check_readable()
         return self._reader.readline(size)
 
-    def readlines(self, hint: Optional[int] = -1, /) -> List[bytes]:
+    def readlines(self, hint: int | None = -1, /) -> list[bytes]:
         """Read and decompress all remaining lines from the file.
 
         Args:
@@ -715,14 +712,14 @@ def codec_decompress(data: ByteIterable, decomp: BaseDecompressor) -> bytes:
 
 
 def codec_open(
-        filename: Union[str, bytes, IO],
+        filename: str | bytes | IO,
         mode: str = 'r',
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
-        comp: Optional[BaseCompressor] = None,
-        decomp: Optional[BaseDecompressor] = None,
-) -> Union[CodecFile, io.TextIOWrapper]:
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
+        comp: BaseCompressor | None = None,
+        decomp: BaseDecompressor | None = None,
+) -> CodecFile | io.TextIOWrapper:
     """Opens a file for reading/writing with compression/decompression.
 
     Similar to the built-in open() function, but handles compressed data.

@@ -57,8 +57,6 @@ import os
 import sys
 from typing import IO
 from typing import Generator
-from typing import Optional
-from typing import Union
 
 from .base import BaseCompressor
 from .base import BaseDecompressor
@@ -68,7 +66,7 @@ from .base import codec_compress
 from .base import codec_decompress
 from .base import codec_open
 
-_CodecGenerator = Generator[None, Union[int, type(Ellipsis), None], None]
+_CodecGenerator = Generator[None, (int | type(Ellipsis) | None), None]
 
 RING_SIZE_MIN = 0x0200
 """Minimum ring buffer size."""
@@ -758,7 +756,7 @@ class LZSSWFile(CodecFile):
 
     def __init__(
             self,
-            filename: Union[str, bytes, os.PathLike, IO],
+            filename: str | bytes | os.PathLike | IO,
             mode: str = 'r',
     ) -> None:
         """Creates a new LZSSW file object.
@@ -830,12 +828,12 @@ def decompress(
 
 
 def open(
-        filename: Union[str, bytes, IO],
+        filename: str | bytes | IO,
         mode: str = 'r',
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
-) -> Union[CodecFile, io.TextIOWrapper]:
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
+) -> CodecFile | io.TextIOWrapper:
     """Opens an LZSSW compressed file.
 
     This provides a high-level interface similar to the built-in open() function

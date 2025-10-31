@@ -34,8 +34,6 @@ import io
 import os
 import sys
 from typing import IO
-from typing import Optional
-from typing import Union
 
 from .base import BaseCompressor
 from .base import BaseDecompressor
@@ -450,7 +448,7 @@ class RLEBFile(CodecFile):
 
     def __init__(
             self,
-            filename: Union[str, bytes, os.PathLike, IO],
+            filename: str | bytes | os.PathLike | IO,
             mode: str = 'r',
     ) -> None:
         """Creates a new RLEB file object.
@@ -497,12 +495,12 @@ def decompress(data: ByteIterable) -> bytes:
 
 
 def open(
-        filename: Union[str, bytes, IO],
+        filename: str | bytes | IO,
         mode: str = 'r',
-        encoding: Optional[str] = None,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
-) -> Union[CodecFile, io.TextIOWrapper]:
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
+) -> CodecFile | io.TextIOWrapper:
     """Opens an RLEB compressed file.
 
     This provides a high-level interface similar to the built-in open() function
