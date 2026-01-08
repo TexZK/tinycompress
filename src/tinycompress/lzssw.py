@@ -126,7 +126,7 @@ class LZSSWCompressor(BaseCompressor):
                        Should be set to a commonly occurring byte value in the input.
 
         Raises:
-            LZSSWException: If any parameters are out of their valid ranges.
+            ValueError: If any parameters are out of their valid ranges.
         """
         ringsize = ringsize.__index__()
         maxmatchlen = maxmatchlen.__index__()

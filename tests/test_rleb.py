@@ -296,6 +296,28 @@ raw_filenames = [
 
 class Test_RLEBCompressor:
 
+    @pytest.mark.parametrize('minsame', [3, 64, 128])
+    def test___init___minsame_pass(self, minsame: int):
+
+        RLEBCompressor(minsame=minsame)
+
+    @pytest.mark.parametrize('minsame', [2, 129])
+    def test___init___minsame_raises(self, minsame: int):
+
+        with pytest.raises(ValueError, match='minsame'):
+            RLEBCompressor(minsame=minsame)
+
+    @pytest.mark.parametrize('minpast', [0, 64, 127])
+    def test___init___minpast_pass(self, minpast: int):
+
+        RLEBCompressor(minpast=minpast)
+
+    @pytest.mark.parametrize('minpast', [-1, 128])
+    def test___init___minpast_raises(self, minpast: int):
+
+        with pytest.raises(ValueError, match='minpast'):
+            RLEBCompressor(minpast=minpast)
+
     @pytest.mark.parametrize(compress_partial_tags, compress_partial_table, ids=compress_partial_ids)
     def test_compress__table(
             self,
@@ -377,6 +399,17 @@ class Test_RLEBCompressor:
 
 class Test_RLEBDecompressor:
 
+    @pytest.mark.parametrize('minsame', [3, 64, 128])
+    def test___init___minsame_pass(self, minsame: int):
+
+        RLEBDecompressor(minsame=minsame)
+
+    @pytest.mark.parametrize('minsame', [2, 129])
+    def test___init___minsame_raises(self, minsame: int):
+
+        with pytest.raises(ValueError, match='minsame'):
+            RLEBDecompressor(minsame=minsame)
+
     @pytest.mark.parametrize(decompress_partial_tags, decompress_partial_table, ids=decompress_partial_ids)
     def test_decompress__table(
             self,
@@ -395,6 +428,18 @@ class Test_RLEBDecompressor:
         assert decomp._more == more
         assert decomp._prev == prev
         assert decomp._ahead == ahead
+
+    @pytest.mark.parametrize('minsame', [3, 4, 5, 6, 7, 8, 16, 32, 64, 128])
+    def test_decompress__minsame(self, minsame: int):
+        decomp = RLEBDecompressor(minsame=minsame)
+
+        ans_out = decomp.decompress(b'\x00b\x80a\x00c')
+        ans_ref = b'b' + (b'a' * minsame) + b'c'
+        assert ans_out == ans_ref
+
+        ans_out = decomp.decompress(b'\x00b\xFFa\x00c')
+        ans_ref = b'b' + (b'a' * (minsame + 0x7F)) + b'c'
+        assert ans_out == ans_ref
 
     def test_decompress__already_flushed(self):
 
@@ -552,6 +597,27 @@ def test_compress__table(
         ref_out: bytes,
 ):
     ans_out = compress(ref_in)
+    assert ans_out == ref_out
+
+
+def test_compress__minsame():
+    ref_in = b'a' * 37
+    ref_out = b'\x9Da'
+    ans_out = compress(ref_in, minsame=8)
+    assert ans_out == ref_out
+
+
+def test_compress__minpast():
+    ref_in = b'a' * 37
+    ref_out = b'\x07aaaaaaaa\x9Aa'
+    ans_out = compress(ref_in, minpast=8)
+    assert ans_out == ref_out
+
+
+def test_compress__minsame_minpast():
+    ref_in = b'a' * 37
+    ref_out = b'\x07aaaaaaaa\x95a'
+    ans_out = compress(ref_in, minsame=8, minpast=8)
     assert ans_out == ref_out
 
 
